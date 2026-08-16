@@ -1,0 +1,126 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "verify_customer",
+      "description": "Verifies customer identity against record using last 4 digits of PAN or birth year before revealing any debt details. Must be called before any disclosure of loan or overdue amount.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "The customer's unique account ID, e.g. ACC-88392"
+          },
+          "verification_code": {
+            "type": "string",
+            "description": "The 4-digit PAN suffix or 4-digit birth year provided by the user."
+          }
+        },
+        "required": ["account_id", "verification_code"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "log_promise_to_pay",
+      "description": "Logs the agreed promise-to-pay date and amount committed by the customer. Only call after verify_customer has succeeded.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "The customer's unique account ID."
+          },
+          "ptp_date": {
+            "type": "string",
+            "description": "The ISO-8601 date agreed upon for payment, e.g., 2026-08-14"
+          },
+          "amount": {
+            "type": "number",
+            "description": "The amount in INR the customer agreed to pay."
+          }
+        },
+        "required": ["account_id", "ptp_date", "amount"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "send_payment_link",
+      "description": "Triggers an instant payment link via SMS or WhatsApp to the customer's registered mobile number. Call only after a promise-to-pay has been logged.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "The customer's unique account ID."
+          },
+          "channel": {
+            "type": "string",
+            "enum": ["SMS", "WhatsApp", "BOTH"],
+            "description": "Delivery channel for the payment link."
+          }
+        },
+        "required": ["account_id", "channel"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "escalate_to_agent",
+      "description": "Escalates the call/case to a human agent or grievance desk, used for hardship claims or disputes that the bot cannot resolve autonomously.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "The customer's unique account ID."
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["HARDSHIP_REQUEST", "DISPUTE", "OTHER"],
+            "description": "Reason for escalation."
+          }
+        },
+        "required": ["account_id", "reason"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "mark_disposition",
+      "description": "Logs the final call outcome and disposition status in the database. Must be called exactly once before every call ends, regardless of outcome.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "The customer's unique account ID."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PTP_AGREED",
+              "ALREADY_PAID",
+              "DISPUTED",
+              "HARDSHIP_ESCALATED",
+              "WRONG_PERSON",
+              "DO_NOT_CALL",
+              "NO_RESPONSE"
+            ],
+            "description": "Final outcome of the call."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-text context about the outcome, e.g. payment reference, hardship reason, or termination cause."
+          }
+        },
+        "required": ["account_id", "status"]
+      }
+    }
+  }
+]
